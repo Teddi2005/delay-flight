@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Kết Quả - Premium Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --vna-teal: #005568;
+        --vna-gold: #d4af37;
+        --vna-teal-dark: #003d4b;
+        --bg-color: #f8f9fc;
+        --text-main: #2c3e50;
+        --text-light: #7f8c8d;
+        --shadow-premium: 0 13px 21px rgba(0, 85, 104, 0.08);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      }
+
+      body {
+        display: flex;
+        height: 100vh;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        overflow: hidden;
+        font-weight: 400;
+      }
+
+      /* ===== Sidebar ===== */
+      .sidebar {
+        width: 280px;
+        background-color: var(--vna-teal);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+      }
+      .sidebar-logo {
+        padding: 34px 26px;
+        font-size: 22px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        color: var(--vna-gold);
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 21px;
+      }
+      .nav-item {
+        padding: 16px 26px;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 15px;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border-left: 4px solid transparent;
+      }
+      .nav-item:hover,
+      .nav-item.active {
+        background-color: var(--vna-teal-dark);
+        border-left-color: var(--vna-gold);
+        color: var(--vna-gold);
+        padding-left: 32px;
+      }
+
+      /* ===== Main Content ===== */
+      .main-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 42px 55px;
+        background: var(--bg-color);
+      }
+      .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .hero-section {
+        background: white;
+        border-radius: 13px;
+        padding: 42px;
+        margin-bottom: 34px;
+        box-shadow: var(--shadow-premium);
+        border-top: 5px solid var(--vna-gold);
+      }
+
+      .flight-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 34px;
+        border-bottom: 1px solid #eef0f5;
+        padding-bottom: 21px;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .data-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 26px;
+        color: var(--text-light);
+        font-size: 13px;
+      }
+      .data-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-refresh {
+        background: white;
+        color: var(--vna-teal);
+        border: 1px solid #dbe2ea;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+      .btn-refresh:hover {
+        border-color: var(--vna-gold);
+        color: var(--vna-gold);
+      }
+      .btn-refresh:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .flight-title {
+        font-size: 28px;
+        font-weight: 300;
+        color: var(--text-main);
+        margin-bottom: 8px;
+      }
+      .flight-title strong {
+        font-weight: 700;
+        color: var(--vna-teal);
+      }
+      .flight-subtitle {
+        color: var(--text-light);
+        font-size: 15px;
+        letter-spacing: 0.5px;
+      }
+
+      .risk-badge {
+        padding: 12px 26px;
+        border-radius: 34px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 15px;
+      }
+      .risk-badge.low {
+        background: #e8f5e9;
+        color: #27ae60;
+        border: 1px solid #c8e6c9;
+      }
+      .risk-badge.medium {
+        background: #fcf3cf;
+        color: #f39c12;
+        border: 1px solid #f9e79f;
+      }
+      .risk-badge.high {
+        background: #fadbd8;
+        color: #c0392b;
+        border: 1px solid #f5b7b1;
+      }
+      .risk-badge.neutral {
+        background: #e6f3f6;
+        color: var(--vna-teal);
+        border: 1px solid #cfe7ee;
+      }
+
+      .flight-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 26px;
+        margin-bottom: 42px;
+      }
+      .detail-card {
+        background: #f8f9fc;
+        border-radius: 8px;
+        padding: 21px;
+        text-align: center;
+        border: 1px solid #eef0f5;
+        transition: 0.3s;
+      }
+      .detail-card:hover {
+        border-color: var(--vna-gold);
+        transform: translateY(-2px);
+      }
+      .detail-icon {
+        font-size: 24px;
+        margin-bottom: 13px;
+        color: var(--vna-gold);
+      }
+      .detail-label {
+        color: var(--text-light);
+        font-size: 13px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+      }
+      .detail-value {
+        font-weight: 700;
+        font-size: 21px;
+        color: var(--vna-teal);
+      }
+
+      .section-title {
+        color: var(--vna-teal);
+        margin-bottom: 26px;
+        font-size: 21px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+      }
+
+      .analysis-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 34px;
+        margin-bottom: 34px;
+      }
+      .analysis-card {
+        background: white;
+        border-radius: 13px;
+        padding: 34px;
+        box-shadow: var(--shadow-premium);
+      }
+      .analysis-card h3 {
+        font-size: 18px;
+        color: var(--text-main);
+        font-weight: 600;
+        margin-bottom: 26px;
+        border-bottom: 1px solid #eef0f5;
+        padding-bottom: 13px;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 21px;
+      }
+      .metric-item {
+        text-align: center;
+        padding: 16px;
+        background: #f8f9fc;
+        border-radius: 8px;
+        border: 1px solid #eef0f5;
+      }
+      .metric-label {
+        font-size: 13px;
+        color: var(--text-light);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+      .metric-value {
+        font-size: 21px;
+        font-weight: 700;
+        color: var(--vna-teal);
+      }
+
+      .charts-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 34px;
+        margin-bottom: 42px;
+      }
+      .chart-card {
+        background: white;
+        border-radius: 13px;
+        padding: 34px;
+        box-shadow: var(--shadow-premium);
+      }
+      .chart-card h3 {
+        font-size: 16px;
+        color: var(--text-main);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 26px;
+        text-align: center;
+        font-weight: 600;
+      }
+
+      .recommendations,
+      .statistics-section {
+        background: white;
+        border-radius: 13px;
+        padding: 34px;
+        box-shadow: var(--shadow-premium);
+        margin-bottom: 34px;
+      }
+      .rec-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 21px;
+      }
+      .rec-item {
+        background: #fcfdfe;
+        border: 1px solid #eef0f5;
+        border-left: 4px solid var(--vna-gold);
+        border-radius: 8px;
+        padding: 16px 21px;
+        display: flex;
+        gap: 13px;
+        align-items: flex-start;
+      }
+      .rec-item i {
+        color: var(--vna-gold);
+        margin-top: 3px;
+        font-size: 18px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 26px;
+      }
+      .stat-card {
+        background: #f8f9fc;
+        border: 1px solid #eef0f5;
+        border-radius: 13px;
+        padding: 26px;
+      }
+      .stat-card h4 {
+        color: var(--text-main);
+        font-weight: 600;
+        margin-bottom: 21px;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-new-prediction {
+        background: var(--vna-gold);
+        color: white;
+        padding: 16px 42px;
+        border: none;
+        border-radius: 34px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 8px 15px rgba(212, 175, 55, 0.3);
+      }
+      .btn-new-prediction:hover {
+        background: #c5a02c;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 20px rgba(212, 175, 55, 0.4);
+      }
+      .chat-panel {
+        position: fixed;
+        right: 24px;
+        bottom: 90px;
+        width: 420px;
+        max-height: 640px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+        border: 1px solid #eef0f5;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px) scale(0.98);
+        transition: 0.25s ease;
+        z-index: 1200;
+      }
+      .chat-panel.open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
+      }
+      .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 1px solid #eef0f5;
+        font-weight: 600;
+        color: var(--vna-teal);
+      }
+      .chat-close {
+        border: none;
+        background: transparent;
+        font-size: 20px;
+        color: var(--text-light);
+        cursor: pointer;
+      }
+      .chat-fab {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--vna-teal);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 24px rgba(0, 85, 104, 0.25);
+        cursor: pointer;
+        z-index: 1201;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+      .chat-fab:hover {
+        transform: translateY(-2px);
+      }
+      .chat-fab.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .chat-window {
+        background: #f8f9fc;
+        border: 1px solid #eef0f5;
+        border-radius: 10px;
+        padding: 18px;
+        height: 360px;
+        overflow-y: auto;
+        margin: 16px;
+        margin-bottom: 10px;
+      }
+      .chat-message {
+        display: flex;
+        margin-bottom: 12px;
+      }
+      .chat-message.user {
+        justify-content: flex-end;
+      }
+      .chat-bubble {
+        max-width: 75%;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        line-height: 1.5;
+        white-space: pre-line;
+        word-break: break-word;
+      }
+      .chat-bubble.user {
+        background: var(--vna-gold);
+        color: white;
+      }
+      .chat-bubble.assistant {
+        background: white;
+        border: 1px solid #e6e9ef;
+        color: var(--text-main);
+      }
+      .chat-input-row {
+        display: flex;
+        gap: 10px;
+        padding: 0 16px 16px 16px;
+      }
+      .chat-input {
+        flex: 1;
+        border: 1px solid #e0e4ea;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font-size: 14px;
+      }
+      .chat-send {
+        background: var(--vna-teal);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 24px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .chat-send:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .chat-error {
+        color: #e74c3c;
+        font-size: 13px;
+        margin: 0 16px 16px 16px;
+      }
+      @media (max-width: 768px) {
+        body {
+          flex-direction: column;
+          overflow: auto;
+        }
+        .sidebar {
+          width: 100%;
+          height: auto;
+          flex-direction: row;
+          overflow-x: auto;
+          padding: 10px;
+        }
+        .sidebar-logo {
+          padding: 10px;
+          margin: 0;
+          border: none;
+        }
+        .nav-item {
+          padding: 10px 15px;
+        }
+        .main-content {
+          padding: 20px;
+        }
+        .charts-section,
+        .analysis-grid {
+          grid-template-columns: 1fr;
+        }
+        .chat-panel {
+          right: 12px;
+          left: 12px;
+          width: auto;
+          bottom: 80px;
+        }
+        .chat-fab {
+          right: 16px;
+          bottom: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fab fa-avianex"></i> <span>FlightAnalytics</span>
+      </div>
+      <a href="index.html" class="nav-item"
+        ><i class="fas fa-home"></i> Trang chủ</a
+      >
+      <a href="dashboard.html" class="nav-item active"
+        ><i class="fas fa-chart-pie"></i> Dashboard Kết quả</a
+      >
+      <a href="history.html" class="nav-item"
+        ><i class="fas fa-history"></i> Lịch sử dự đoán</a
+      >
+    </div>
+
+    <div class="main-content">
+      <div class="dashboard-container">
+        <div class="hero-section">
+          <div class="flight-header">
+            <div>
+              <h1 class="flight-title">
+                Phân Tích <strong>Chuyến Bay</strong>
+              </h1>
+              <p class="flight-subtitle">
+                Dự đoán độ trễ và thông tin chi tiết bằng AI
+              </p>
+            </div>
+            <div id="riskBadge" class="risk-badge"></div>
+          </div>
+          <div class="data-actions">
+            <div id="dataMeta" class="data-meta">
+              <i class="fas fa-clock"></i>
+              <span>Chưa có thời gian lưu</span>
+            </div>
+            <button id="refreshData" class="btn-refresh">
+              Làm mới dữ liệu
+            </button>
+          </div>
+
+          <div class="flight-details" id="flightDetails"></div>
+
+          <h3 class="section-title">
+            <i class="fas fa-chart-bar"></i> Thống Kê Tổng Quan
+          </h3>
+          <div class="stats-grid" id="statsGrid"></div>
+        </div>
+
+        <div class="analysis-grid" id="analysisGrid"></div>
+
+        <div class="recommendations" id="recommendations"></div>
+
+        <div class="charts-section">
+          <div class="chart-card">
+              <h3><i class="fas fa-chart-line"></i> Dự Đoán & Ước Tính Trễ</h3>
+            <canvas id="delayChart"></canvas>
+          </div>
+          <div class="chart-card">
+              <h3><i class="fas fa-cloud-sun"></i> Nhiệt Độ Trong Ngày</h3>
+            <canvas id="weatherChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3><i class="fas fa-plane"></i> Hiệu Suất Hãng Bay</h3>
+            <canvas id="airlineChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3><i class="fas fa-calendar-alt"></i> Xu Hướng Theo Tháng</h3>
+            <canvas id="monthlyChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3><i class="fas fa-chart-pie"></i> Tỷ Lệ Nguyên Nhân Trễ</h3>
+            <canvas id="reasonsChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3><i class="fas fa-wind"></i> Yếu Tố Môi Trường</h3>
+            <canvas id="environmentalChart"></canvas>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 40px">
+          <a href="index.html" class="btn-new-prediction">
+            Tạo Phân Tích Mới
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div id="chatFab" class="chat-fab" title="Trò chuyện với AI">
+      <i class="fas fa-comment-dots"></i>
+    </div>
+    <div class="chat-panel" id="aiChat" aria-hidden="true">
+      <div class="chat-header">
+        <span><i class="fas fa-robot"></i> Trợ lý AI</span>
+        <button class="chat-close" id="chatClose" aria-label="Đóng">×</button>
+      </div>
+      <div id="chatWindow" class="chat-window"></div>
+      <div class="chat-input-row">
+        <input
+          id="chatInput"
+          class="chat-input"
+          type="text"
+          placeholder="Hỏi thêm về chuyến bay, rủi ro, thời tiết..."
+        />
+        <button id="chatSend" class="chat-send">Gửi</button>
+      </div>
+      <div id="chatError" class="chat-error" style="display: none"></div>
+    </div>
+
+    <script>
+  const API_BASE = "http://localhost:3000";
+
+  const flightData = JSON.parse(localStorage.getItem("flightData"));
+  if (!flightData) window.location.href = "index.html";
+
+  const input = flightData.input || {};
+  const analysis = flightData.analysis || {};
+  const stats = analysis.statistics || {};
+  const estimates = analysis.delayEstimates || {
+    model: flightData.delay ?? 0,
+    combined: flightData.delay ?? 0,
+    realtime: null,
+  };
+  const dataMeta = document.getElementById("dataMeta");
+  const refreshButton = document.getElementById("refreshData");
+
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const toC = (f) => (Number.isFinite(f) ? Math.round(((f - 32) * 5) / 9) : 0);
+  const toMm = (inch) => (Number.isFinite(inch) ? inch * 25.4 : 0);
+
+  const maxTempC = toC(input.max_temp_f);
+  const minTempC = toC(input.min_temp_f);
+  const avgTempC = Number.isFinite(input.avg_temp_f)
+    ? toC(input.avg_temp_f)
+    : Math.round((maxTempC + minTempC) / 2);
+  const precipMm = Number.isFinite(input.precip_in) ? toMm(input.precip_in) : 0;
+  const windKts = Number.isFinite(input.avg_wind_speed_kts)
+    ? Math.round(input.avg_wind_speed_kts)
+    : 0;
+  const humidity = Number.isFinite(input.avg_humidity)
+    ? Math.round(input.avg_humidity)
+    : null;
+
+  const modelDelay = Number.isFinite(estimates.model)
+    ? estimates.model
+    : flightData.delay || 0;
+
+  // Risk Badge
+  const riskBadge = document.getElementById("riskBadge");
+  riskBadge.className = "risk-badge neutral";
+  riskBadge.innerHTML = `
+    <i class="fas fa-clock"></i>
+    Dự đoán mô hình: <strong>${Math.round(modelDelay)} phút</strong>
+  `;
+
+  // Data meta
+  if (dataMeta) {
+    const savedAt = flightData.savedAt ? new Date(flightData.savedAt).toLocaleString("vi-VN") : null;
+    dataMeta.innerHTML = `
+      <i class="fas fa-clock"></i>
+      <span>${savedAt ? `Dữ liệu lưu lúc ${savedAt}` : "Dữ liệu từ lần dự đoán trước"}</span>
+    `;
+  }
+
+  const buildRefreshPayload = () => ({
+    country: input.country,
+    flightDate: input.flightDate || input.FL_DATE,
+    flightTime: input.flightTime || input.CRS_DEP_TIME,
+    airline: input.airline || input.OP_CARRIER,
+    origin: input.origin || input.ORIGIN,
+    destination: input.destination || input.DEST,
+  });
+
+  const refreshFromServer = async () => {
+    if (!refreshButton) return;
+    refreshButton.disabled = true;
+    const originalText = refreshButton.textContent;
+    refreshButton.textContent = "Đang làm mới...";
+    try {
+      const payload = buildRefreshPayload();
+      const response = await fetch(`${API_BASE}/datas/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+      const result = await response.json();
+      result.savedAt = new Date().toISOString();
+      localStorage.setItem("flightData", JSON.stringify(result));
+      window.location.reload();
+    } catch (error) {
+      if (dataMeta) {
+        dataMeta.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Không thể làm mới. Kiểm tra backend.`;
+      }
+    } finally {
+      refreshButton.textContent = originalText;
+      refreshButton.disabled = false;
+    }
+  };
+
+  if (refreshButton) {
+    refreshButton.addEventListener("click", refreshFromServer);
+  }
+
+  // Flight details
+  document.getElementById("flightDetails").innerHTML = `
+    <div class="detail-card"><div class="detail-icon"><i class="fas fa-route"></i></div><div class="detail-label">Hành Trình</div><div class="detail-value">${input.ORIGIN || "N/A"} → ${input.DEST || "N/A"}</div></div>
+    <div class="detail-card"><div class="detail-icon"><i class="fas fa-plane"></i></div><div class="detail-label">Hãng Bay</div><div class="detail-value" style="font-size: 18px;">${input.OP_CARRIER || "N/A"}</div></div>
+    <div class="detail-card"><div class="detail-icon"><i class="fas fa-calendar-day"></i></div><div class="detail-label">Khởi Hành</div><div class="detail-value" style="font-size: 18px;">${input.FL_DATE ? new Date(input.FL_DATE).toLocaleDateString("vi-VN") : "N/A"} - ${input.CRS_DEP_TIME || "--:--"}</div></div>
+    <div class="detail-card"><div class="detail-icon"><i class="fas fa-road"></i></div><div class="detail-label">Khoảng Cách</div><div class="detail-value">${input.DISTANCE ? Math.round(input.DISTANCE * 1.60934) : "N/A"} km</div></div>
+    <div class="detail-card"><div class="detail-icon"><i class="fas fa-thermometer-half"></i></div><div class="detail-label">Nhiệt Độ</div><div class="detail-value">${maxTempC}°C / ${minTempC}°C</div></div>
+    <div class="detail-card"><div class="detail-icon"><i class="fas fa-tint"></i></div><div class="detail-label">Độ Ẩm</div><div class="detail-value">${humidity !== null ? humidity + "%" : "N/A"}</div></div>
+    <div class="detail-card"><div class="detail-icon"><i class="fas fa-cloud-rain"></i></div><div class="detail-label">Mưa & Gió</div><div class="detail-value">${precipMm.toFixed(1)}mm • ${windKts} kts</div></div>
+  `;
+
+  const airportCongestion = analysis.airportCongestion || {
+    origin: "Medium",
+    destination: "Medium",
+  };
+
+  const airlinePerformance = analysis.airlinePerformance || {
+    onTimeRate: 0,
+    avgDelay: 0,
+    delayScore: null,
+    cancellationRate: 0,
+  };
+  const delayScore = Number.isFinite(airlinePerformance.delayScore)
+    ? airlinePerformance.delayScore
+    : clamp(100 - airlinePerformance.avgDelay * 1.2, 0, 100);
+
+  const operationalData = analysis.operationalData || {};
+
+  // Analysis grid
+  document.getElementById("analysisGrid").innerHTML = `
+    <div class="analysis-card">
+      <h3><i class="fas fa-plane-circle-check"></i> Hiệu Suất Hãng Bay (ước tính)</h3>
+      <div class="metric-grid">
+        <div class="metric-item"><div class="metric-label">Đúng giờ</div><div class="metric-value">${Math.round(airlinePerformance.onTimeRate || 0)}%</div></div>
+        <div class="metric-item"><div class="metric-label">Ít trễ</div><div class="metric-value">${Math.round(delayScore)}%</div></div>
+      </div>
+    </div>
+    <div class="analysis-card">
+      <h3><i class="fas fa-building"></i> Tắc Nghẽn Sân Bay</h3>
+      <div class="metric-grid">
+        <div class="metric-item"><div class="metric-label">Tại ${input.ORIGIN || "N/A"}</div><div class="metric-value" style="color: ${airportCongestion.origin === "High" ? "#c62828" : airportCongestion.origin === "Medium" ? "#f39c12" : "#27ae60"};">${airportCongestion.origin}</div></div>
+        <div class="metric-item"><div class="metric-label">Tại ${input.DEST || "N/A"}</div><div class="metric-value" style="color: ${airportCongestion.destination === "High" ? "#c62828" : airportCongestion.destination === "Medium" ? "#f39c12" : "#27ae60"};">${airportCongestion.destination}</div></div>
+      </div>
+    </div>
+    <div class="analysis-card">
+      <h3><i class="fas fa-cloud-sun-rain"></i> Tác Động Thời Tiết</h3>
+      <div style="text-align: center; margin-top: 15px;">
+        <div style="font-size: 24px; font-weight: 700; color: ${analysis.weatherImpact === "High" ? "#c62828" : analysis.weatherImpact === "Medium" ? "#f39c12" : "#27ae60"}; margin-bottom: 8px;">
+          ${analysis.weatherImpact || "N/A"}
+        </div>
+        <div style="color: var(--text-light); font-size: 14px;">Mưa: ${precipMm.toFixed(1)}mm | Gió: ${windKts} kts | Ẩm: ${humidity !== null ? humidity + "%" : "N/A"}</div>
+        <div style="color: var(--text-light); font-size: 13px; margin-top: 6px;">${input.condition_text || "Không có mô tả thời tiết"}</div>
+      </div>
+    </div>
+    <div class="analysis-card">
+      <h3><i class="fas fa-satellite-dish"></i> Dữ Liệu Thực Tế Từ Hệ Thống</h3>
+      <div style="font-size: 14px; color: var(--text-light); line-height: 1.7;">
+        <p><strong>Nguồn dữ liệu:</strong> ${
+          operationalData.source === "aviationstack"
+            ? "Aviationstack (đã kết nối API air)"
+            : "Không có dữ liệu real-time"
+        }</p>
+        <p><strong>Chuyến bay:</strong> ${
+          operationalData.flightNumber || "Không rõ"
+        } &mdash; ${
+          operationalData.status
+            ? operationalData.status.toUpperCase()
+            : "Trạng thái không rõ"
+        }</p>
+        <p><strong>Giờ cất cánh theo lịch:</strong> ${
+          operationalData.scheduledDeparture
+            ? new Date(operationalData.scheduledDeparture).toLocaleString("vi-VN")
+            : "Không có"
+        }</p>
+        <p><strong>Giờ ước tính hiện tại:</strong> ${
+          operationalData.estimatedDeparture
+            ? new Date(operationalData.estimatedDeparture).toLocaleString("vi-VN")
+            : "Không có"
+        }</p>
+        <p><strong>Giờ thực tế (nếu đã bay):</strong> ${
+          operationalData.actualDeparture
+            ? new Date(operationalData.actualDeparture).toLocaleString("vi-VN")
+            : "Chưa cất cánh hoặc không có dữ liệu"
+        }</p>
+        <p><strong>Độ trễ thực tế ở hệ thống:</strong> ${
+          operationalData.realtimeDepartureDelay != null
+            ? `${operationalData.realtimeDepartureDelay} phút`
+            : "Không có"
+        }</p>
+        <p><strong>Độ tin cậy:</strong> ${operationalData.confidence || "N/A"}</p>
+      </div>
+    </div>
+  `;
+
+  // Recommendations
+  const recommendations = Array.isArray(analysis.recommendations)
+    ? analysis.recommendations
+    : [];
+  document.getElementById("recommendations").innerHTML = `
+    <h3 class="section-title"><i class="fas fa-lightbulb"></i> Khuyến Nghị Hành Trình</h3>
+    <div class="rec-list">
+      ${recommendations
+        .map(
+          (rec) =>
+            `<div class="rec-item"><i class="fas fa-check-circle"></i><div style="color: var(--text-main); line-height: 1.5;">${rec}</div></div>`
+        )
+        .join("")}
+    </div>
+  `;
+
+  // Statistics
+  const delayDistribution = stats.delayDistribution || {
+    "0-15min": 0,
+    "15-30min": 0,
+    "30-60min": 0,
+    "60min+": 0,
+  };
+  const onTimePercentage = Number.isFinite(stats.onTimePercentage)
+    ? stats.onTimePercentage
+    : Math.round(airlinePerformance.onTimeRate || 0);
+  const avgDelayStat = Number.isFinite(stats.avgDelay)
+    ? stats.avgDelay
+    : Math.round(modelDelay);
+
+  document.getElementById("statsGrid").innerHTML = `
+    <div class="stat-card">
+      <h4>Tổng quan Đúng Giờ</h4>
+      <div style="text-align: center; font-size: 36px; font-weight: 700; color: var(--vna-teal); margin-bottom: 8px;">${Math.round(onTimePercentage)}%</div>
+      <div style="text-align: center; color: var(--text-light); font-size: 15px;">Ước tính trễ mô hình: <strong>${avgDelayStat} phút</strong></div>
+    </div>
+    <div class="stat-card">
+      <h4>Phân Bổ Theo Khung Giờ Trễ</h4>
+      <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+        <div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #27ae60; margin-bottom: 5px;">${delayDistribution["0-15min"]}%</div><div style="font-size: 13px; color: var(--text-light); text-transform: uppercase;">0-15 phút</div></div>
+        <div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #f39c12; margin-bottom: 5px;">${delayDistribution["15-30min"]}%</div><div style="font-size: 13px; color: var(--text-light); text-transform: uppercase;">15-30 phút</div></div>
+        <div style="text-align: center;"><div style="font-size: 24px; font-weight: 700; color: #c0392b; margin-bottom: 5px;">${delayDistribution["30-60min"] + delayDistribution["60min+"]}%</div><div style="font-size: 13px; color: var(--text-light); text-transform: uppercase;">> 30 phút</div></div>
+      </div>
+    </div>
+  `;
+
+  /* ========= CHARTS (Chuẩn Premium Colors) ========= */
+  Chart.defaults.color = "#7f8c8d";
+  Chart.defaults.font.family = '"Segoe UI", "Helvetica Neue", sans-serif';
+  const cTeal = "#005568";
+  const cGold = "#d4af37";
+
+  const delayLabels = ["Dự đoán mô hình"];
+  const delayValues = [modelDelay];
+
+  new Chart(document.getElementById("delayChart"), {
+    type: "bar",
+    data: {
+      labels: delayLabels,
+      datasets: [
+        {
+          data: delayValues,
+          backgroundColor: delayValues.map((value) => {
+            if (value >= 30) return "#c0392b";
+            if (value >= 15) return "#f39c12";
+            return cTeal;
+          }),
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          title: { display: true, text: "Phút" },
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+
+  new Chart(document.getElementById("weatherChart"), {
+    type: "bar",
+    data: {
+      labels: ["Max", "Avg", "Min"],
+      datasets: [
+        {
+          data: [maxTempC, avgTempC, minTempC],
+          backgroundColor: [cGold, "#3a7f8e", cTeal],
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y} °C`,
+          },
+        },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: "°C" },
+          beginAtZero: false,
+        },
+      },
+    },
+  });
+
+  new Chart(document.getElementById("airlineChart"), {
+    type: "radar",
+    data: {
+      labels: ["Đúng giờ", "Ít trễ", "Ít hủy"],
+      datasets: [
+        {
+          data: [
+            clamp(airlinePerformance.onTimeRate || 0, 0, 100),
+            clamp(delayScore, 0, 100),
+            clamp(100 - (airlinePerformance.cancellationRate || 0), 0, 100),
+          ],
+          borderColor: cTeal,
+          backgroundColor: "rgba(0, 85, 104, 0.2)",
+          borderWidth: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { r: { max: 100, ticks: { display: false } } },
+    },
+  });
+
+  const monthlyAvgDelay = stats.monthlyAvgDelay || {};
+  new Chart(document.getElementById("monthlyChart"), {
+    type: "line",
+    data: {
+      labels: Object.keys(monthlyAvgDelay),
+      datasets: [
+        {
+          data: Object.values(monthlyAvgDelay),
+          borderColor: cTeal,
+          tension: 0.4,
+          borderWidth: 3,
+          pointBackgroundColor: cGold,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          title: { display: true, text: "Phút" },
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+
+  new Chart(document.getElementById("reasonsChart"), {
+    type: "doughnut",
+    data: {
+      labels: (stats.topDelayReasons || []).map((r) => r.reason),
+      datasets: [
+        {
+          data: (stats.topDelayReasons || []).map((r) => r.percentage),
+          backgroundColor: [cTeal, cGold, "#3a7f8e", "#e8d38f", "#143a42"],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { padding: 20, usePointStyle: true },
+        },
+      },
+      cutout: "70%",
+    },
+  });
+
+  new Chart(document.getElementById("environmentalChart"), {
+    type: "bar",
+    data: {
+      labels: ["Mưa (mm)", "Gió (kts)", "Ẩm (%)"],
+      datasets: [
+        {
+          data: [precipMm, windKts, humidity ?? null],
+          backgroundColor: [cGold, "#3a7f8e", cTeal],
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const label = ctx.label || "";
+              const value = ctx.parsed.y;
+              if (value == null) return `${label}: N/A`;
+              if (label.includes("mm")) return `${value.toFixed(1)} mm`;
+              if (label.includes("kts")) return `${Math.round(value)} kts`;
+              return `${Math.round(value)} %`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: { beginAtZero: true },
+      },
+    },
+  });
+
+  // AI Chat
+  const chatFab = document.getElementById("chatFab");
+  const chatPanel = document.getElementById("aiChat");
+  const chatClose = document.getElementById("chatClose");
+  const chatWindow = document.getElementById("chatWindow");
+  const chatInput = document.getElementById("chatInput");
+  const chatSend = document.getElementById("chatSend");
+  const chatError = document.getElementById("chatError");
+  let chatInitialized = false;
+
+  const setChatError = (message) => {
+    if (!chatError) return;
+    chatError.textContent = message;
+    chatError.style.display = message ? "block" : "none";
+  };
+
+  const formatChatText = (text) => {
+    if (!text) return "";
+    return String(text)
+      .replace(/\*\*/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  };
+
+  const appendMessage = (role, text) => {
+    const row = document.createElement("div");
+    row.className = `chat-message ${role}`;
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${role}`;
+    bubble.textContent = role === "assistant" ? formatChatText(text) : text;
+    row.appendChild(bubble);
+    chatWindow.appendChild(row);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    return bubble;
+  };
+
+  const sendChat = async (message, options = {}) => {
+    if (!message || !chatWindow) return;
+    const { auto = false } = options;
+    if (!auto) appendMessage("user", message);
+    const placeholder = appendMessage("assistant", "Đang phân tích...");
+    if (chatSend) chatSend.disabled = true;
+    setChatError("");
+
+    try {
+      const response = await fetch(`${API_BASE}/ai/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          context: {
+            flightData,
+            input,
+            analysis,
+            delay: modelDelay,
+            rawDelay: flightData.delay,
+            delayEstimates: estimates,
+          },
+        }),
+      });
+      if (!response.ok) {
+        let detail = `Server error: ${response.statusText}`;
+        try {
+          const errJson = await response.json();
+          if (errJson?.error) detail = errJson.error;
+        } catch (_) {
+          // ignore parse errors
+        }
+        throw new Error(detail);
+      }
+      const result = await response.json();
+      placeholder.textContent = result.reply || "Không có phản hồi từ AI.";
+    } catch (error) {
+      placeholder.textContent = "Xin lỗi, hiện tại chưa thể trả lời.";
+      const message = error?.message
+        ? `Không thể kết nối trợ lý AI: ${error.message}`
+        : "Không thể kết nối trợ lý AI. Kiểm tra backend và DEEPSEEK_API_KEY.";
+      setChatError(message);
+    } finally {
+      if (chatSend) chatSend.disabled = false;
+    }
+  };
+
+  const initChat = () => {
+    if (chatInitialized || !chatWindow) return;
+    chatInitialized = true;
+    appendMessage(
+      "assistant",
+      "Mình là trợ lý AI cho bảng phân tích. Bạn có thể hỏi về rủi ro, thời tiết hoặc gợi ý hành trình."
+    );
+  };
+
+  const openChat = () => {
+    if (!chatPanel) return;
+    chatPanel.classList.add("open");
+    chatPanel.setAttribute("aria-hidden", "false");
+    if (chatFab) chatFab.classList.add("hidden");
+    if (chatInput) chatInput.focus();
+    initChat();
+  };
+
+  const closeChat = () => {
+    if (!chatPanel) return;
+    chatPanel.classList.remove("open");
+    chatPanel.setAttribute("aria-hidden", "true");
+    if (chatFab) chatFab.classList.remove("hidden");
+  };
+
+  if (chatFab) chatFab.addEventListener("click", openChat);
+  if (chatClose) chatClose.addEventListener("click", closeChat);
+
+  if (chatSend && chatInput) {
+    chatSend.addEventListener("click", () => {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      chatInput.value = "";
+      sendChat(message);
+    });
+
+    chatInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        chatSend.click();
+      }
+    });
+  }
+
+  if (chatPanel && !chatPanel.classList.contains("open")) {
+    chatPanel.setAttribute("aria-hidden", "true");
+  }
+</script>
+  </body>
+</html>
+
+
+
+
+

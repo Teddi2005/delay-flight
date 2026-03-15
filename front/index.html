@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flight Delay Prediction - Premium</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --vna-teal: #005568;
+        --vna-gold: #d4af37;
+        --vna-teal-dark: #003d4b;
+        --bg-color: #f8f9fc;
+        --text-main: #2c3e50;
+        --text-light: #7f8c8d;
+        --shadow-premium: 0 13px 21px rgba(0, 85, 104, 0.08);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      }
+
+      body {
+        display: flex;
+        height: 100vh;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        overflow: hidden;
+        font-weight: 400;
+      }
+
+      /* ===== Sidebar ===== */
+      .sidebar {
+        width: 280px;
+        background-color: var(--vna-teal);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+      }
+      .sidebar-logo {
+        padding: 34px 26px;
+        font-size: 22px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        color: var(--vna-gold);
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 21px;
+      }
+      .nav-item {
+        padding: 16px 26px;
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 15px;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border-left: 4px solid transparent;
+      }
+      .nav-item:hover,
+      .nav-item.active {
+        background-color: var(--vna-teal-dark);
+        border-left-color: var(--vna-gold);
+        color: var(--vna-gold);
+        padding-left: 32px;
+      }
+
+      /* ===== Main Content ===== */
+      .main-content {
+        flex: 1;
+        overflow-y: auto;
+        position: relative;
+        background: var(--bg-color);
+      }
+
+      /* Thêm overflow: hidden để ảnh không bị tràn ra ngoài khi phóng to */
+      .cover {
+        width: 100%;
+        height: 50vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.85);
+        /* Gọi hiệu ứng chuyển động */
+        animation: cinematicFlight 35s ease-in-out infinite alternate;
+        transform-origin: center center;
+        will-change: transform; /* Giúp trình duyệt xử lý mượt hơn */
+      }
+
+      /* Khai báo chuyển động bay cho ảnh nền */
+      @keyframes cinematicFlight {
+        0% {
+          transform: scale(1) translate(0, 0);
+        }
+        100% {
+          /* Phóng to ảnh lên 15% và trôi nhẹ sang góc trên bên trái */
+          transform: scale(1.15) translate(-2%, -2%);
+        }
+      }
+
+      .header-overlay {
+        position: absolute;
+        top: 42px;
+        right: 55px;
+        color: white;
+        text-align: right;
+        z-index: 5;
+      }
+      .header-overlay p {
+        font-size: 16px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        color: var(--vna-gold);
+      }
+      .header-overlay h1 {
+        font-size: 42px;
+        font-weight: 300;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+      .header-overlay h1 span {
+        font-weight: 700;
+      }
+
+      /* ===== Form Container ===== */
+      .form-wrapper {
+        padding: 0 55px;
+        margin-top: -89px;
+        position: relative;
+        z-index: 10;
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .form-container {
+        background: #ffffff;
+        border-radius: 13px;
+        box-shadow: var(--shadow-premium);
+        overflow: hidden;
+        border-top: 5px solid var(--vna-gold);
+      }
+      .form-header {
+        padding: 26px 42px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fafafa;
+      }
+      .form-header h2 {
+        font-size: 21px;
+        color: var(--vna-teal);
+        font-weight: 600;
+      }
+      .form-body {
+        padding: 42px;
+      }
+
+      .route-inputs {
+        display: flex;
+        align-items: center;
+        gap: 21px;
+        margin-bottom: 34px;
+        background: #f8f9fc;
+        padding: 21px 26px;
+        border-radius: 8px;
+        border: 1px solid #eef0f5;
+      }
+      .route-inputs .form-group {
+        flex: 1;
+      }
+      .route-inputs .form-group input {
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--vna-teal);
+        border-bottom: none;
+        background: transparent;
+        padding: 0;
+        margin-top: 8px;
+      }
+      .exchange-icon {
+        color: var(--vna-gold);
+        font-size: 21px;
+        background: white;
+        padding: 13px;
+        border-radius: 50%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 34px;
+        margin-bottom: 34px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group label {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .form-group input {
+        padding: 10px 0;
+        border: none;
+        border-bottom: 1px solid #dcdde1;
+        font-size: 16px;
+        color: var(--text-main);
+        transition: 0.3s;
+        background: transparent;
+      }
+      .form-group input:focus {
+        outline: none;
+        border-bottom: 2px solid var(--vna-gold);
+      }
+
+      .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 34px;
+      }
+      .btn-predict {
+        background: var(--vna-gold);
+        color: white;
+        padding: 16px 55px;
+        border: none;
+        border-radius: 34px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 8px 15px rgba(212, 175, 55, 0.3);
+      }
+      .btn-predict:hover {
+        background: #c5a02c;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 20px rgba(212, 175, 55, 0.4);
+      }
+
+      .loading {
+        text-align: center;
+        margin-top: 26px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .error {
+        color: #e74c3c;
+        padding: 16px;
+        background: #fdf0ed;
+        border-radius: 8px;
+        margin-top: 21px;
+        text-align: center;
+        border: 1px solid #fadbd8;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          flex-direction: column;
+          overflow: auto;
+        }
+        .sidebar {
+          width: 100%;
+          height: auto;
+          flex-direction: row;
+          overflow-x: auto;
+          padding: 10px;
+        }
+        .sidebar-logo {
+          padding: 10px;
+          margin: 0;
+          border: none;
+        }
+        .nav-item {
+          padding: 10px 15px;
+        }
+        .main-content {
+          overflow: visible;
+          padding: 0;
+        }
+        .form-wrapper {
+          margin-top: -50px;
+          padding: 0 15px;
+          margin-bottom: 30px;
+        }
+        .route-inputs {
+          flex-direction: column;
+        }
+        .exchange-icon {
+          transform: rotate(90deg);
+          margin-top: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fab fa-avianex"></i>
+        <span>FlightAnalytics</span>
+      </div>
+      <a href="index.html" class="nav-item active"
+        ><i class="fas fa-home"></i> Trang chủ</a
+      >
+      <a href="dashboard.html" class="nav-item"
+        ><i class="fas fa-chart-pie"></i> Dashboard Kết quả</a
+      >
+      <a href="history.html" class="nav-item"
+        ><i class="fas fa-history"></i> Lịch sử dự đoán</a
+      >
+    </div>
+
+    <div class="main-content">
+      <div class="cover">
+        <img
+          src="https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80"
+          alt="Landscape"
+        />
+        <div class="header-overlay">
+          <p>Premium Analytics</p>
+          <h1><span>Khám Phá</span> Hành Trình</h1>
+        </div>
+      </div>
+
+      <div class="form-wrapper">
+        <div class="form-container">
+          <div class="form-header"><h2>Dự Đoán Độ Trễ Chuyến Bay</h2></div>
+          <div class="form-body">
+            <form id="flightForm">
+              <div class="route-inputs">
+                <div class="form-group">
+                  <label for="origin"
+                    ><i class="fas fa-plane-departure"></i> Điểm Đi</label
+                  >
+                  <input
+                    type="text"
+                    id="origin"
+                    name="origin"
+                    required
+                    placeholder="HAN"
+                  />
+                </div>
+                <i class="fas fa-exchange-alt exchange-icon"></i>
+                <div class="form-group" style="text-align: right">
+                  <label for="destination"
+                    >Điểm Đến <i class="fas fa-plane-arrival"></i
+                  ></label>
+                  <input
+                    type="text"
+                    id="destination"
+                    name="destination"
+                    required
+                    placeholder="SGN"
+                    style="text-align: right"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="airline">Hãng Hàng Không</label>
+                  <input
+                    type="text"
+                    id="airline"
+                    name="airline"
+                    required
+                    placeholder="Vietnam Airlines"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="country">Quốc Gia</label>
+                  <input
+                    type="text"
+                    id="country"
+                    name="country"
+                    required
+                    placeholder="Vietnam"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="flightDate">Ngày Bay</label>
+                  <input
+                    type="date"
+                    id="flightDate"
+                    name="flightDate"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="flightTime">Giờ Khởi Hành</label>
+                  <input
+                    type="time"
+                    id="flightTime"
+                    name="flightTime"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="button-container">
+                <button type="submit" class="btn-predict">
+                  Phân Tích Ngay
+                </button>
+              </div>
+            </form>
+
+            <div id="loading" class="loading" style="display: none">
+              <div
+                style="
+                  display: inline-block;
+                  animation: spin 1s linear infinite;
+                  border: 3px solid #f3f3f3;
+                  border-top: 3px solid var(--vna-gold);
+                  border-radius: 50%;
+                  width: 34px;
+                  height: 34px;
+                "
+              ></div>
+              <p
+                style="
+                  margin-top: 13px;
+                  color: var(--vna-teal);
+                  font-size: 14px;
+                "
+              >
+                Đang xử lý thuật toán...
+              </p>
+            </div>
+            <div id="error" class="error" style="display: none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("flightForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const data = Object.fromEntries(formData);
+          document.getElementById("loading").style.display = "block";
+          document.getElementById("error").style.display = "none";
+
+          try {
+            const response = await fetch("http://localhost:3000/datas/search", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+            if (!response.ok)
+              throw new Error(`Server error: ${response.statusText}`);
+            const result = await response.json();
+
+            result.savedAt = new Date().toISOString(); // Lưu thời gian hiện tại
+            localStorage.setItem("flightData", JSON.stringify(result)); // Đẩy sang dashboard
+
+            // Lưu vào mảng lịch sử (History)
+            let history =
+              JSON.parse(localStorage.getItem("flightHistory")) || [];
+            history.unshift(result);
+            localStorage.setItem("flightHistory", JSON.stringify(history));
+
+            // Chuyển trang
+            window.location.href = "dashboard.html";
+          } catch (error) {
+            document.getElementById("error").style.display = "block";
+            document.getElementById("error").textContent =
+              "❌ Lỗi kết nối: " + error.message;
+          } finally {
+            document.getElementById("loading").style.display = "none";
+          }
+        });
+    </script>
+  </body>
+</html>
